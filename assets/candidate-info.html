@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Call Details</title>
+</head>
+
+<body>
+    <h1>Candidate Call Details</h1>
+    <div id="fetch-div">
+        <input id="cid" value="" name="cid" placeholder="Enter ID" />
+        <button type="button" onclick="fetchdata()">Fetch</button>
+    </div>
+    <section>
+        <h2>Applicant Information</h2>
+        <ul>
+            <li>Name: <span id="applicant-name"></span></li>
+            <li>Job ID: <span id="job-id"></span></li>
+            <li>Company: <span id="company"></span></li>
+            <li>Phone: <span id="phone"></span></li>
+            <li>Email: <span id="email"></span></li>
+            <li>Status: <span id="status"></span></li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Recordings</h2>
+        <ul id="recordings-list"></ul>
+    </section>
+
+    <script>
+        const cid = document.getElementById("cid");
+        const fetchdiv = document.getElementById("fetch-div");
+        const applicantName = document.getElementById('applicant-name');
+        const jobId = document.getElementById('job-id');
+        const company = document.getElementById('company');
+        const phone = document.getElementById('phone');
+        const email = document.getElementById('email');
+        const status = document.getElementById('status');
+        const recordingsList = document.getElementById('recordings-list');
+
+        const queryParamsId = new URLSearchParams(window.location.search || "").get("id");
+        if (queryParamsId) {
+            cid.value = queryParamsId;
+            fetchdata();
+        }
+
+        // Assuming you have a function to fetch data from the API
+        function renderdata(data) {
+            applicantName.textContent = data.name;
+            jobId.textContent = data.job_id;
+            company.textContent = data.company;
+            phone.textContent = data.phone;
+            email.textContent = data.email;
+            status.textContent = data.status;
+
+            const recordings = data.recordings;
+            for (const key in recordings) {
+                const recording = recordings[key];
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                            <b>Recording ${parseInt(key) + 1}</b>
+                            <br />
+                            <br />
+                            <audio controls>
+                                <source src="${recording.url}" type="audio/ogg">
+                            </audio>
+                            <p><b>Transcription:</b> ${recording.transcription}</p>
+                            <p><b>Context:</b> ${recording.output_context}</p>
+                            <br />
+                            <br />
+                        `;
+                recordingsList.appendChild(listItem);
+            }
+        }
+
+
+        function fetchdata() {
+            if (!cid.value) {
+                return alert("Please enter the ID");
+            }
+
+            fetch(`https://ai-interview-call-8568-dev.twil.io/candidate-info?cid=${cid.value.trim()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            })
+                .then(async response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    fetchdiv.style.display = "none";
+                    renderdata(data);
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('Error fetching candidate details.');
+                });
+        }
+    </script>
+</body>
+
+</html>
